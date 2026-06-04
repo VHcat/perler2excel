@@ -199,12 +199,6 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
     margin-bottom: 12px;
 }
 .dl-btn:active { background: #4f46e5; }
-.dl-share-btn {
-    background: #059669; border: none; color: white;
-    cursor: pointer; font-size: 16px; font-weight: 600;
-    display: block; width: 100%; margin-bottom: 8px;
-}
-.dl-share-btn:active { background: #047857; }
 .dl-hint { font-size: 12px; color: #9ca3af; line-height: 1.6; margin-bottom: 16px; }
 .dl-close {
     background: none; border: 1px solid #d1d5db; border-radius: 8px;

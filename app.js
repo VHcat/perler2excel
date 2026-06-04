@@ -529,77 +529,56 @@ async function exportExcel() {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  // 检测 iOS 设备
+  const file = new File([blob], filename, { type: blob.type });
+
+  // === 策略一：Web Share API（iOS 15.4+ / Android Chrome）—— 最原生 ===
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: '拼豆 Excel' });
+      showProgress(100); setTimeout(hideProgress, 500);
+      setStatus(`Excel 已分享：${filename}`);
+      return;
+    } catch (e) {
+      // 用户取消或失败 → 回退到平台专用方案
+    }
+  }
+
+  // === 策略二：平台回退 ===
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
-  if (!isIOS) {
-    // 桌面端 + Android：尝试标准下载
-    const isAndroidMobile = isMobile() && /Android/i.test(navigator.userAgent);
-
-    if (isAndroidMobile) {
-      // Android：使用 Data URL（兼容性更好，避免部分浏览器/WebView 不支持 Blob URL）
-      const reader = new FileReader();
-      reader.onload = function() {
-        const link = document.createElement('a');
-        link.href = reader.result;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => document.body.removeChild(link), 1000);
-        showProgress(100); setTimeout(hideProgress, 500);
-        setStatus(`Excel 已下载：${filename}`);
-      };
-      reader.readAsDataURL(blob);
-    } else {
-      // 桌面端：Blob URL + <a download>
-      const link = document.createElement('a');
-      const blobUrl = URL.createObjectURL(blob);
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      // 延迟回收，确保下载启动后再释放
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 3000);
-      showProgress(100); setTimeout(hideProgress, 500);
-      setStatus(`Excel 生成完毕，已下载：${filename}`);
-    }
-    return;
+  if (isIOS) {
+    // iOS 无 Share API（< 15.4）：弹窗 + Data URL 长按下载
+    // iOS Safari 忽略 download 属性，只能通过长按链接触发保存
+    showIOSDownloadModal(blob, filename);
+  } else {
+    // 桌面端 + Android：Blob URL + <a download> 均可正常触发下载
+    triggerBlobDownload(blob, filename);
   }
+}
 
-  // === iOS 专用：弹窗 + Web Share API ===
-  const file = new File([blob], filename, { type: blob.type });
-  const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+function triggerBlobDownload(blob, filename) {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  }, 3000);
+  showProgress(100); setTimeout(hideProgress, 500);
+  setStatus(`Excel 生成完毕，已下载：${filename}`);
+}
 
+function showIOSDownloadModal(blob, filename) {
   const reader = new FileReader();
   reader.onload = function() {
     $('dlFilename').textContent = filename;
-    const dlLink = $('dlLink');
-    dlLink.href = reader.result;
-    dlLink.download = filename;
-
-    // 分享按钮：iOS 15.4+ 支持分享文件到「文件」App
-    const shareBtn = $('dlShareBtn');
-    if (canShareFiles) {
-      shareBtn.style.display = 'block';
-      shareBtn.onclick = async function() {
-        try {
-          await navigator.share({ files: [file], title: '拼豆 Excel' });
-          setStatus(`Excel 已分享：${filename}`);
-          $('dlOverlay').classList.remove('active');
-        } catch (e) { /* 用户取消 */ }
-      };
-    } else {
-      shareBtn.style.display = 'none';
-    }
-
-    $('dlHint').innerHTML = canShareFiles
-      ? '点击上方绿色按钮可直接保存到「文件」<br>或长按蓝色按钮选择「下载链接」'
-      : '请长按上方按钮选择「下载链接」<br>或截图保存色号信息';
-
+    $('dlLink').href = reader.result;
+    $('dlLink').download = filename;
+    $('dlHint').textContent = '请长按上方蓝色按钮，选择「下载链接」保存文件';
     $('dlOverlay').classList.add('active');
     showProgress(100); setTimeout(hideProgress, 500);
     setStatus(`Excel 已生成：${filename}`);
