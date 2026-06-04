@@ -293,11 +293,10 @@ function generatePreview() {
   setStatus('正在使用 LAB 算法进行色彩匹配...');
   showProgress(10);
 
-  // 固定高分辨率输出（每格 SCALE×SCALE 像素），确保每次结果完全一致 + 区域均值平滑
-  const SCALE = 10;
-  const cw = cols * SCALE, ch = rows * SCALE;
-  const croppedCanvas = cropper.getCroppedCanvas({ width: cw, height: ch });
+  // 全分辨率裁切，每格可采样数百像素，保证色彩准确度
+  const croppedCanvas = cropper.getCroppedCanvas();
   const ctx = croppedCanvas.getContext('2d', { willReadFrequently: true });
+  const cw = croppedCanvas.width, ch = croppedCanvas.height;
 
   gridCols = cols; gridRows = rows;
   currentGridData = [];
@@ -308,22 +307,27 @@ function generatePreview() {
   previewCanvas.width  = cols * previewCellSize;
   previewCanvas.height = rows * previewCellSize;
 
+  // 整数化每格尺寸，保证跨设备确定性（避免浮点边界不一致）
+  const cellW = Math.floor(cw / cols);
+  const cellH = Math.floor(ch / rows);
+
   // 一次性读取全部像素
   const allPixels = ctx.getImageData(0, 0, cw, ch).data;
 
-  // 每格取中心 65% 区域的像素均值（避免边缘插值像素）
-  const innerFraction = 0.65;
-  const inset = Math.floor((SCALE - SCALE * innerFraction) / 2);
-  const sampleSize = SCALE - 2 * inset;
+  // 每格取中心 65% 区域的像素均值
+  const insetX = Math.floor(cellW * 0.175);
+  const insetY = Math.floor(cellH * 0.175);
+  const sampleW = cellW - 2 * insetX;
+  const sampleH = cellH - 2 * insetY;
 
   for (let r = 0; r < rows; r++) {
     const rowData = [];
     for (let c = 0; c < cols; c++) {
       let sumR = 0, sumG = 0, sumB = 0, count = 0;
-      const cellX = c * SCALE + inset;
-      const cellY = r * SCALE + inset;
-      for (let y = cellY; y < cellY + sampleSize; y++) {
-        for (let x = cellX; x < cellX + sampleSize; x++) {
+      const startX = c * cellW + insetX;
+      const startY = r * cellH + insetY;
+      for (let y = startY; y < startY + sampleH; y++) {
+        for (let x = startX; x < startX + sampleW; x++) {
           const idx = (y * cw + x) * 4;
           sumR += allPixels[idx];
           sumG += allPixels[idx + 1];
