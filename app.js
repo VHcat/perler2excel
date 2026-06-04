@@ -257,11 +257,9 @@ function generatePreview() {
   setStatus('正在使用 LAB 算法进行色彩匹配...');
   showProgress(10);
 
-  const croppedCanvas = cropper.getCroppedCanvas();
+  // 固定输出尺寸 = cols × rows，每个像素精确对应一颗豆子，保证每次结果完全一致
+  const croppedCanvas = cropper.getCroppedCanvas({ width: cols, height: rows });
   const ctx = croppedCanvas.getContext('2d', { willReadFrequently: true });
-
-  const cellW = croppedCanvas.width / cols;
-  const cellH = croppedCanvas.height / rows;
 
   gridCols = cols; gridRows = rows;
   currentGridData = [];
@@ -272,24 +270,14 @@ function generatePreview() {
   previewCanvas.width  = cols * previewCellSize;
   previewCanvas.height = rows * previewCellSize;
 
-  const innerFraction = 0.65;
+  // 一次性读取全部像素（cols × rows），避免逐格 getImageData
+  const allPixels = ctx.getImageData(0, 0, cols, rows).data;
 
   for (let r = 0; r < rows; r++) {
     const rowData = [];
     for (let c = 0; c < cols; c++) {
-      const insetX = (cellW * (1 - innerFraction)) / 2;
-      const insetY = (cellH * (1 - innerFraction)) / 2;
-      const left = Math.max(0, Math.round(c * cellW + insetX));
-      const top  = Math.max(0, Math.round(r * cellH + insetY));
-      const sw   = Math.max(1, Math.round(cellW * innerFraction));
-      const sh   = Math.max(1, Math.round(cellH * innerFraction));
-
-      const imgData = ctx.getImageData(left, top, sw, sh).data;
-      let sumR=0, sumG=0, sumB=0, count=0;
-      for (let i = 0; i < imgData.length; i += 4) {
-        sumR += imgData[i]; sumG += imgData[i+1]; sumB += imgData[i+2]; count++;
-      }
-      const avgRgb = [Math.round(sumR/count), Math.round(sumG/count), Math.round(sumB/count)];
+      const idx = (r * cols + c) * 4;
+      const avgRgb = [allPixels[idx], allPixels[idx + 1], allPixels[idx + 2]];
 
       // Task 6: 判断是否为白色/透明（阈值可调）
       const lab = rgbToLab(avgRgb);
