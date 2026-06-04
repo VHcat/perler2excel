@@ -529,18 +529,18 @@ async function exportExcel() {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  const file = new File([blob], filename, { type: blob.type });
-
   // === 策略一：Web Share API（iOS 15.4+ / Android Chrome）—— 最原生 ===
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
+  // 整体 try-catch：canShare()/new File() 在部分浏览器会抛异常而非返回 false
+  try {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: '拼豆 Excel' });
       showProgress(100); setTimeout(hideProgress, 500);
       setStatus(`Excel 已分享：${filename}`);
       return;
-    } catch (e) {
-      // 用户取消或失败 → 回退到平台专用方案
     }
+  } catch (e) {
+    // canShare / File 构造 / share 抛错 → 回退到平台专用方案
   }
 
   // === 策略二：平台回退 ===
