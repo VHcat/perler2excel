@@ -1,0 +1,11 @@
+# Auto-detect text files, normalize to LF
+* text=auto
+
+# Source code
+*.html   text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.md     text eol=lf
+
+# Minified third-party libs — treat as binary to skip diff
+lib/*    -text -diff
