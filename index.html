@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼豆图转 Excel 像素画</title>
+    <link href="lib/cropper.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Task 8: 操作引导提示栏 -->
+<div class="guide-bar" id="guideBar">
+    <div class="steps">
+        <div class="step"><span class="step-num">1</span> 选择图片并框选区域</div>
+        <div class="step"><span class="step-num">2</span> 调整参数，点击"生成预览"</div>
+        <div class="step"><span class="step-num">3</span> 满意后点击"导出 Excel"</div>
+    </div>
+    <button class="close-btn" id="closeGuide" title="不再显示">&times;</button>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+    <!-- 文件选择 -->
+    <div class="toolbar-group">
+        <input type="file" id="imageInput" accept="image/*">
+    </div>
+
+    <!-- 网格参数 (Task 1 & 2) -->
+    <div class="toolbar-group">
+        <label title="拼豆画水平方向有多少颗豆子（1~200）">列: <input type="number" id="cols" value="26" min="1" max="200"></label>
+        <label title="拼豆画垂直方向有多少颗豆子（1~200）">行: <input type="number" id="rows" value="23" min="1" max="200"></label>
+        <label title="Excel 中每个格子的大小，值越大格子越清晰，但文件越大（8~48 像素）">单元格: <input type="number" id="pixelSize" value="24" min="8" max="48">px</label>
+        <label title="一块物理拼豆板的边长（常见 28×28 或 29×29），用于在 Excel 中画红色粗线辅助定位">钉板: <input type="number" id="boardSize" value="28" min="1" max="100">格</label>
+    </div>
+
+    <!-- 色卡 (Task 4) -->
+    <div class="toolbar-group">
+        <label title="拼豆品牌色卡，决定图片颜色映射到哪套豆子色号">色卡:
+            <select id="paletteSelect">
+                <option value="artkal-s" selected>Artkal S (159色)</option>
+                <option value="mard">MARD (291色)</option>
+            </select>
+        </label>
+    </div>
+
+    <!-- 预览与过滤选项 (Task 4/6/7 合并) -->
+    <div class="toolbar-group">
+        <label title="勾选后将接近白色的像素标记为空白（不占豆子），适合白色/透明背景的图片"><input type="checkbox" id="ignoreWhite"> 忽略白色</label>
+        <label id="thresholdLabel" style="display:none;" title="控制白色判断的严格程度：值越大，只有越纯的白才被过滤；值越小，浅灰/米白也会被过滤">灵敏度: <input type="range" id="whiteThreshold" min="70" max="98" value="90" style="width:70px;vertical-align:middle;"></label>
+        <label title="在预览画布上叠加显示每颗豆子的色号（如 S01），方便对照"><input type="checkbox" id="showCodes"> 显示色号</label>
+    </div>
+
+    <!-- 导出选项 (Task 9 & 11) -->
+    <div class="toolbar-group">
+        <label>作品名: <input type="text" id="fileName" placeholder="我的拼豆画" title="导出的 Excel 文件名，留空则使用原图文件名"></label>
+        <label title="导出时格子里只填颜色，不写色号文字（适合打印）"><input type="checkbox" id="colorOnly"> 仅填色</label>
+        <label title="在 Excel 右侧附带一张色号、数量、颜色对照表"><input type="checkbox" id="includeLegend" checked> 图例</label>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="toolbar-group">
+        <button class="btn btn-primary" id="btnPreview">生成预览</button>
+        <button class="btn btn-success" id="btnExport">导出 Excel</button>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <!-- 左侧：原图裁切 -->
+    <div class="workspace">
+        <div class="pane-header">原图框选区</div>
+        <div class="pane-body">
+            <img id="image" src="" style="display:none;">
+        </div>
+    </div>
+
+    <!-- 右侧：预览 + 统计 -->
+    <div class="preview-pane">
+        <div class="pane-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>拼豆效果预览</span>
+            <!-- 缩放控件 -->
+            <span class="zoom-controls">
+                <button class="zoom-btn" id="zoomOut" title="缩小">−</button>
+                <span id="zoomLabel" style="font-size:12px;color:#6b7280;min-width:36px;text-align:center;">100%</span>
+                <button class="zoom-btn" id="zoomIn" title="放大">+</button>
+                <button class="zoom-btn" id="zoomReset" title="重置" style="font-size:11px;">1:1</button>
+            </span>
+        </div>
+        <div class="preview-scroll" id="previewScroll">
+            <canvas id="previewCanvas"></canvas>
+        </div>
+        <!-- Task 5: 色豆统计面板 -->
+        <div class="stats-panel empty" id="statsPanel">
+            预览生成后将显示色豆用量统计
+        </div>
+    </div>
+</div>
+
+<!-- 状态栏 (Task 10) -->
+<div class="status-bar">
+    <span id="statusText">系统就绪：请选择一张图片开始。</span>
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+</div>
+
+<!-- 悬浮提示 (Task 7) -->
+<div class="preview-tooltip" id="previewTooltip">
+    <span class="color-swatch"></span>
+    <span class="tooltip-text"></span>
+</div>
+
+<!-- 外部库 -->
+<script src="lib/cropper.min.js"></script>
+<script src="lib/exceljs.min.js"></script>
+
+<!-- 色卡数据 -->
+<script src="palettes/artkal-s.js"></script>
+<script src="palettes/mard.js"></script>
+
+<!-- 主应用逻辑 -->
+<script src="app.js"></script>
+
+</body>
+</html>
