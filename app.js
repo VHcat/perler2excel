@@ -27,7 +27,7 @@ const PALETTES = {
 };
 
 function getCurrentPalette() {
-  return PALETTES[$('paletteSelect').value] || PALETTE_ARTKAL_S;
+  return PALETTES[$('paletteSelect').value] || PALETTE_MARD;
 }
 
 // 切换色卡后自动重新预计算 LAB
@@ -529,36 +529,12 @@ async function exportExcel() {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  // 下载策略：桌面端用 <a download>，移动端用 Share API / 页内弹窗
-  if (isMobile()) {
-    // 策略一：Web Share API（iOS 15.4+ / Android Chrome），最原生的分享体验
-    if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: blob.type })] })) {
-      try {
-        await navigator.share({
-          files: [new File([blob], filename, { type: blob.type })],
-          title: '拼豆 Excel',
-        });
-        showProgress(100); setTimeout(hideProgress, 500);
-        setStatus(`Excel 已分享：${filename}`);
-        return;
-      } catch (e) { /* 用户取消或失败，回退到弹窗 */ }
-    }
+  // 检测 iOS 设备
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-    // 策略二：页面内下载弹窗（不依赖 window.open，不被弹窗拦截器拦截）
-    const reader = new FileReader();
-    reader.onload = function() {
-      $('dlFilename').textContent = filename;
-      const dlLink = $('dlLink');
-      dlLink.href = reader.result;
-      dlLink.download = filename;
-      $('dlOverlay').classList.add('active');
-
-      showProgress(100); setTimeout(hideProgress, 500);
-      setStatus(`Excel 已生成：${filename}，请在弹窗中下载`);
-    };
-    reader.readAsDataURL(blob);
-  } else {
-    // 桌面端：标准 Blob URL + <a download>
+  if (!isIOS) {
+    // 桌面端 + Android：标准 Blob URL + <a download> 均可正常下载
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -566,5 +542,42 @@ async function exportExcel() {
     URL.revokeObjectURL(link.href);
     showProgress(100); setTimeout(hideProgress, 500);
     setStatus(`Excel 生成完毕，已下载：${filename}`);
+    return;
   }
+
+  // === iOS 专用：弹窗 + Web Share API ===
+  const file = new File([blob], filename, { type: blob.type });
+  const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    $('dlFilename').textContent = filename;
+    const dlLink = $('dlLink');
+    dlLink.href = reader.result;
+    dlLink.download = filename;
+
+    // 分享按钮：iOS 15.4+ 支持分享文件到「文件」App
+    const shareBtn = $('dlShareBtn');
+    if (canShareFiles) {
+      shareBtn.style.display = 'block';
+      shareBtn.onclick = async function() {
+        try {
+          await navigator.share({ files: [file], title: '拼豆 Excel' });
+          setStatus(`Excel 已分享：${filename}`);
+          $('dlOverlay').classList.remove('active');
+        } catch (e) { /* 用户取消 */ }
+      };
+    } else {
+      shareBtn.style.display = 'none';
+    }
+
+    $('dlHint').innerHTML = canShareFiles
+      ? '点击上方绿色按钮可直接保存到「文件」<br>或长按蓝色按钮选择「下载链接」'
+      : '请长按上方按钮选择「下载链接」<br>或截图保存色号信息';
+
+    $('dlOverlay').classList.add('active');
+    showProgress(100); setTimeout(hideProgress, 500);
+    setStatus(`Excel 已生成：${filename}`);
+  };
+  reader.readAsDataURL(blob);
 }

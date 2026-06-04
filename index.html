@@ -38,8 +38,8 @@
     <div class="toolbar-group">
         <label title="拼豆品牌色卡，决定图片颜色映射到哪套豆子色号">色卡:
             <select id="paletteSelect">
-                <option value="artkal-s" selected>Artkal S (159色)</option>
-                <option value="mard">MARD (291色)</option>
+                <option value="artkal-s">Artkal S (159色)</option>
+                <option value="mard" selected>MARD (291色)</option>
             </select>
         </label>
     </div>
@@ -122,8 +122,9 @@
     <div class="dl-modal">
         <p class="dl-title">📎 Excel 已生成</p>
         <p class="dl-filename" id="dlFilename"></p>
+        <button class="dl-btn dl-share-btn" id="dlShareBtn" style="display:none;">📤 分享 / 保存到文件</button>
         <a class="dl-btn" id="dlLink" download>点击下载 Excel</a>
-        <p class="dl-hint">如果无法下载，请长按上方按钮选择“下载链接”<br>或使用系统分享功能保存到“文件”</p>
+        <p class="dl-hint" id="dlHint"></p>
         <button class="dl-close" id="dlClose">关闭</button>
     </div>
 </div>
