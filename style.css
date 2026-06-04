@@ -179,6 +179,23 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
 .zoom-btn:hover { background: #f3f4f6; }
 .zoom-btn:active { background: #e5e7eb; }
 
+/* === 编辑/浏览模式切换 === */
+.mode-toggle {
+    display: none; /* 默认桌面端隐藏 */
+    align-items: center; gap: 4px;
+    padding: 4px 10px; border: 1px solid #d1d5db;
+    background: white; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: #4b5563;
+    transition: all 0.15s;
+}
+.mode-toggle:hover { background: #f3f4f6; }
+.mode-toggle .mode-icon { font-size: 14px; }
+.mode-toggle.browse { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+
+/* 浏览模式：禁用 Cropper 触摸拦截，允许页面滚动 */
+.workspace.browse-mode .pane-body { touch-action: auto !important; }
+.workspace.browse-mode .cropper-container { pointer-events: none; }
+
 /* === 响应式 === */
 @media (max-width: 768px) {
     .main-container { flex-direction: column; height: auto; min-height: auto; }
@@ -186,4 +203,5 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
     .toolbar { gap: 6px; }
     .toolbar-group { padding: 4px 6px; }
     .guide-bar .steps { flex-direction: column; gap: 6px; }
+    .mode-toggle { display: flex; } /* 手机端显示模式切换按钮 */
 }

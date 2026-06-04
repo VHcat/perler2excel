@@ -145,6 +145,33 @@ document.addEventListener('keydown', e => {
   if (e.key === 'e' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); exportExcel(); }
 });
 
+// --- 编辑/浏览模式切换（手机端） ---
+const isMobile = () => window.innerWidth <= 768;
+let cropEditMode = !isMobile(); // 手机端默认浏览模式
+
+function applyCropMode() {
+  const workspace = document.querySelector('.workspace');
+  const btn = $('modeToggle');
+  if (cropEditMode) {
+    workspace.classList.remove('browse-mode');
+    btn.classList.remove('browse');
+    $('modeIcon').textContent = '\u270E'; // ✎
+    $('modeText').textContent = '编辑中';
+    if (cropper) cropper.setDragMode('crop');
+  } else {
+    workspace.classList.add('browse-mode');
+    btn.classList.add('browse');
+    $('modeIcon').textContent = '\u270B'; // ✋
+    $('modeText').textContent = '可滑动';
+    if (cropper) cropper.setDragMode('none');
+  }
+}
+
+$('modeToggle').addEventListener('click', () => {
+  cropEditMode = !cropEditMode;
+  applyCropMode();
+});
+
 // --- 图片加载 ---
 $('imageInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
@@ -157,12 +184,14 @@ $('imageInput').addEventListener('change', function(e) {
     if (cropper) cropper.destroy();
     cropper = new Cropper(imageEl, {
       viewMode: 1,
-      dragMode: 'crop',
+      dragMode: cropEditMode ? 'crop' : 'none',
       ready() {
         // Task 1: 初始化时锁定当前行列比例
         const cols = clampInt('cols', 1, 200);
         const rows = clampInt('rows', 1, 200);
         cropper.setAspectRatio(cols / rows);
+        // 初始化时应用当前模式（手机端默认浏览模式）
+        applyCropMode();
       }
     });
     setStatus('图片已加载，请框选区域后点击"生成预览"。');

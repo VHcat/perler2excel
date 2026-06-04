@@ -69,7 +69,13 @@
 <div class="main-container">
     <!-- 左侧：原图裁切 -->
     <div class="workspace">
-        <div class="pane-header">原图框选区</div>
+        <div class="pane-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>原图框选区</span>
+            <button class="mode-toggle" id="modeToggle" title="切换编辑/浏览模式">
+                <span class="mode-icon" id="modeIcon">&#9997;</span>
+                <span id="modeText">编辑中</span>
+            </button>
+        </div>
         <div class="pane-body">
             <img id="image" src="" style="display:none;">
         </div>
