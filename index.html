@@ -117,6 +117,17 @@
     <span class="tooltip-text"></span>
 </div>
 
+<!-- 移动端下载弹窗 -->
+<div class="dl-overlay" id="dlOverlay">
+    <div class="dl-modal">
+        <p class="dl-title">📎 Excel 已生成</p>
+        <p class="dl-filename" id="dlFilename"></p>
+        <a class="dl-btn" id="dlLink" download>点击下载 Excel</a>
+        <p class="dl-hint">如果无法下载，请长按上方按钮选择“下载链接”<br>或使用系统分享功能保存到“文件”</p>
+        <button class="dl-close" id="dlClose">关闭</button>
+    </div>
+</div>
+
 <!-- 外部库 -->
 <script src="lib/cropper.min.js"></script>
 <script src="lib/exceljs.min.js"></script>

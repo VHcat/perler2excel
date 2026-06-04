@@ -172,6 +172,13 @@ $('modeToggle').addEventListener('click', () => {
   applyCropMode();
 });
 
+// --- 下载弹窗关闭 ---
+$('dlClose').addEventListener('click', () => {
+  $('dlOverlay').classList.remove('active');
+  // 释放 Data URL 内存
+  $('dlLink').href = '';
+});
+
 // --- 图片加载 ---
 $('imageInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
@@ -518,45 +525,32 @@ async function exportExcel() {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  // 下载策略：桌面端用 <a download>，移动端用 Data URL 新窗口打开
+  // 下载策略：桌面端用 <a download>，移动端用 Share API / 页内弹窗
   if (isMobile()) {
-    // 移动端：转为 Data URL 在新窗口打开，浏览器会自动触发下载/保存
+    // 策略一：Web Share API（iOS 15.4+ / Android Chrome），最原生的分享体验
+    if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: blob.type })] })) {
+      try {
+        await navigator.share({
+          files: [new File([blob], filename, { type: blob.type })],
+          title: '拼豆 Excel',
+        });
+        showProgress(100); setTimeout(hideProgress, 500);
+        setStatus(`Excel 已分享：${filename}`);
+        return;
+      } catch (e) { /* 用户取消或失败，回退到弹窗 */ }
+    }
+
+    // 策略二：页面内下载弹窗（不依赖 window.open，不被弹窗拦截器拦截）
     const reader = new FileReader();
     reader.onload = function() {
-      const dataUrl = reader.result;
-      const w = window.open('', '_blank');
-      if (w) {
-        const doc = w.document;
-        doc.title = filename;
-        doc.body.style.cssText = 'font-family:system-ui;text-align:center;padding-top:40vh;margin:0;';
+      $('dlFilename').textContent = filename;
+      const dlLink = $('dlLink');
+      dlLink.href = reader.result;
+      dlLink.download = filename;
+      $('dlOverlay').classList.add('active');
 
-        const title = doc.createElement('p');
-        title.innerHTML = '📎 <strong>' + filename + '</strong>';
-        doc.body.appendChild(title);
-
-        const dl = doc.createElement('a');
-        dl.href = dataUrl;
-        dl.download = filename;
-        dl.textContent = '点击下载 Excel';
-        dl.style.cssText = 'display:inline-block;padding:12px 24px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:16px;';
-        const wrap = doc.createElement('p');
-        wrap.appendChild(dl);
-        doc.body.appendChild(wrap);
-
-        const hint = doc.createElement('p');
-        hint.textContent = '如果无法自动下载，请长按上方链接选择“下载链接”';
-        hint.style.cssText = 'color:#6b7280;font-size:13px;';
-        doc.body.appendChild(hint);
-
-        // 尝试自动触发下载
-        dl.click();
-      } else {
-        // 弹窗被拦截，回退到当前页面
-        window.location.href = dataUrl;
-      }
-      showProgress(100);
-      setTimeout(hideProgress, 500);
-      setStatus(`Excel 生成完毕：${filename}`);
+      showProgress(100); setTimeout(hideProgress, 500);
+      setStatus(`Excel 已生成：${filename}，请在弹窗中下载`);
     };
     reader.readAsDataURL(blob);
   } else {
@@ -566,8 +560,7 @@ async function exportExcel() {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
-    showProgress(100);
-    setTimeout(hideProgress, 500);
+    showProgress(100); setTimeout(hideProgress, 500);
     setStatus(`Excel 生成完毕，已下载：${filename}`);
   }
 }
