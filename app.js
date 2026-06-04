@@ -286,8 +286,10 @@ function generatePreview() {
   setStatus('正在使用 LAB 算法进行色彩匹配...');
   showProgress(10);
 
-  // 固定输出尺寸 = cols × rows，每个像素精确对应一颗豆子，保证每次结果完全一致
-  const croppedCanvas = cropper.getCroppedCanvas({ width: cols, height: rows });
+  // 固定高分辨率输出（每格 SCALE×SCALE 像素），确保每次结果完全一致 + 区域均值平滑
+  const SCALE = 10;
+  const cw = cols * SCALE, ch = rows * SCALE;
+  const croppedCanvas = cropper.getCroppedCanvas({ width: cw, height: ch });
   const ctx = croppedCanvas.getContext('2d', { willReadFrequently: true });
 
   gridCols = cols; gridRows = rows;
@@ -299,14 +301,30 @@ function generatePreview() {
   previewCanvas.width  = cols * previewCellSize;
   previewCanvas.height = rows * previewCellSize;
 
-  // 一次性读取全部像素（cols × rows），避免逐格 getImageData
-  const allPixels = ctx.getImageData(0, 0, cols, rows).data;
+  // 一次性读取全部像素
+  const allPixels = ctx.getImageData(0, 0, cw, ch).data;
+
+  // 每格取中心 65% 区域的像素均值（避免边缘插值像素）
+  const innerFraction = 0.65;
+  const inset = Math.floor((SCALE - SCALE * innerFraction) / 2);
+  const sampleSize = SCALE - 2 * inset;
 
   for (let r = 0; r < rows; r++) {
     const rowData = [];
     for (let c = 0; c < cols; c++) {
-      const idx = (r * cols + c) * 4;
-      const avgRgb = [allPixels[idx], allPixels[idx + 1], allPixels[idx + 2]];
+      let sumR = 0, sumG = 0, sumB = 0, count = 0;
+      const cellX = c * SCALE + inset;
+      const cellY = r * SCALE + inset;
+      for (let y = cellY; y < cellY + sampleSize; y++) {
+        for (let x = cellX; x < cellX + sampleSize; x++) {
+          const idx = (y * cw + x) * 4;
+          sumR += allPixels[idx];
+          sumG += allPixels[idx + 1];
+          sumB += allPixels[idx + 2];
+          count++;
+        }
+      }
+      const avgRgb = [Math.round(sumR / count), Math.round(sumG / count), Math.round(sumB / count)];
 
       // Task 6: 判断是否为白色/透明（阈值可调）
       const lab = rgbToLab(avgRgb);
