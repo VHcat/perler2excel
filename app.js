@@ -531,17 +531,42 @@ async function exportExcel() {
 
   // 检测 iOS 设备
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
   if (!isIOS) {
-    // 桌面端 + Android：标准 Blob URL + <a download> 均可正常下载
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showProgress(100); setTimeout(hideProgress, 500);
-    setStatus(`Excel 生成完毕，已下载：${filename}`);
+    // 桌面端 + Android：尝试标准下载
+    const isAndroidMobile = isMobile() && /Android/i.test(navigator.userAgent);
+
+    if (isAndroidMobile) {
+      // Android：使用 Data URL（兼容性更好，避免部分浏览器/WebView 不支持 Blob URL）
+      const reader = new FileReader();
+      reader.onload = function() {
+        const link = document.createElement('a');
+        link.href = reader.result;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => document.body.removeChild(link), 1000);
+        showProgress(100); setTimeout(hideProgress, 500);
+        setStatus(`Excel 已下载：${filename}`);
+      };
+      reader.readAsDataURL(blob);
+    } else {
+      // 桌面端：Blob URL + <a download>
+      const link = document.createElement('a');
+      const blobUrl = URL.createObjectURL(blob);
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      // 延迟回收，确保下载启动后再释放
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 3000);
+      showProgress(100); setTimeout(hideProgress, 500);
+      setStatus(`Excel 生成完毕，已下载：${filename}`);
+    }
     return;
   }
 
