@@ -201,6 +201,8 @@ function updateGridOverlay() {
 }
 
 // --- 像素/格 → 列/行联动 ---
+// 调整像素/格时只更新网格和行列显示，不动裁切框
+// 手动修改列/行时才会锁定裁切框比例（见下方 cols/rows 事件）
 function applyCellPx() {
   if (!cropper) return;
   const cellPx = Math.max(2, Math.min(500, parseInt($('cellPx').value) || 2));
@@ -209,7 +211,6 @@ function applyCellPx() {
   const rows = Math.max(1, Math.min(200, Math.round(box.height / cellPx)));
   $('cols').value = cols;
   $('rows').value = rows;
-  cropper.setAspectRatio(cols / rows);
   updateGridOverlay();
 }
 
