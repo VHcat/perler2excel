@@ -43,6 +43,20 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
     width: 56px; padding: 4px 6px; border: 1px solid #d1d5db;
     border-radius: 4px; font-size: 13px; text-align: center;
 }
+.stepper { display: inline-flex; align-items: center; gap: 0; }
+.stepper input[type="number"] { width: 48px; border-radius: 0; -moz-appearance: textfield; }
+.stepper input[type="number"]::-webkit-inner-spin-button,
+.stepper input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.step-btn {
+    width: 24px; height: 26px; border: 1px solid #d1d5db; background: #f9fafb;
+    cursor: pointer; font-size: 14px; font-weight: 600; color: #4b5563;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    transition: background 0.1s;
+}
+.step-btn:first-child { border-radius: 4px 0 0 4px; }
+.step-btn:last-child  { border-radius: 0 4px 4px 0; }
+.step-btn:hover  { background: #e5e7eb; }
+.step-btn:active { background: #d1d5db; }
 .toolbar-group input[type="text"] {
     width: 110px; padding: 4px 8px; border: 1px solid #d1d5db;
     border-radius: 4px; font-size: 13px;
