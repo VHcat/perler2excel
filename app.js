@@ -193,7 +193,25 @@ function updateGridOverlay() {
   overlay.style.height = box.height + 'px';
   overlay.style.setProperty('--grid-cw', (box.width / cols) + 'px');
   overlay.style.setProperty('--grid-ch', (box.height / rows) + 'px');
+
+  // 同步更新像素/格显示（仅在非编辑状态下，避免覆盖用户输入）
+  if (document.activeElement !== $('cellPx')) {
+    $('cellPx').value = Math.round(box.width / cols);
+  }
 }
+
+// --- 像素/格 → 列/行联动 ---
+$('cellPx').addEventListener('input', () => {
+  if (!cropper) return;
+  const cellPx = Math.max(2, Math.min(500, parseInt($('cellPx').value) || 2));
+  const box = cropper.getCropBoxData();
+  const cols = Math.max(1, Math.min(200, Math.round(box.width / cellPx)));
+  const rows = Math.max(1, Math.min(200, Math.round(box.height / cellPx)));
+  $('cols').value = cols;
+  $('rows').value = rows;
+  cropper.setAspectRatio(cols / rows);
+  updateGridOverlay();
+});
 
 // --- 下载弹窗关闭 ---
 $('dlClose').addEventListener('click', () => {
@@ -224,6 +242,9 @@ $('imageInput').addEventListener('change', function(e) {
         cropper.setAspectRatio(cols / rows);
         // 初始化时应用当前模式（手机端默认浏览模式）
         applyCropMode();
+        // 初始化像素/格显示
+        const box = cropper.getCropBoxData();
+        $('cellPx').value = Math.round(box.width / cols);
       }
     });
     setStatus('图片已加载，请框选区域后点击"生成预览"。');

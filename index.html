@@ -30,6 +30,7 @@
     <div class="toolbar-group">
         <label title="拼豆画水平方向有多少颗豆子（1~200）">列: <input type="number" id="cols" value="26" min="1" max="200"></label>
         <label title="拼豆画垂直方向有多少颗豆子（1~200）">行: <input type="number" id="rows" value="23" min="1" max="200"></label>
+        <label title="每个拼豆格对应原图的像素数，调小网格更密豆子更多，调大网格更疏。与列/行联动">像素/格: <input type="number" id="cellPx" value="" min="2" max="500" step="1"></label>
         <label title="Excel 中每个格子的大小，值越大格子越清晰，但文件越大（8~48 像素）">单元格: <input type="number" id="pixelSize" value="24" min="8" max="48">px</label>
         <label title="一块物理拼豆板的边长（常见 28×28 或 29×29），用于在 Excel 中画红色粗线辅助定位">钉板: <input type="number" id="boardSize" value="28" min="1" max="100">格</label>
     </div>
