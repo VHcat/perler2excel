@@ -57,6 +57,17 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
 .step-btn:last-child  { border-radius: 0 4px 4px 0; }
 .step-btn:hover  { background: #e5e7eb; }
 .step-btn:active { background: #d1d5db; }
+
+/* === 比例锁定按钮 === */
+.lock-btn {
+  width: 30px; height: 28px; border: 1px solid #d1d5db; border-radius: 5px;
+  background: #f9fafb; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.lock-btn:hover  { background: #e5e7eb; }
+.lock-btn.locked { background: #dbeafe; border-color: #93c5fd; }
+
 .toolbar-group input[type="text"] {
     width: 110px; padding: 4px 8px; border: 1px solid #d1d5db;
     border-radius: 4px; font-size: 13px;

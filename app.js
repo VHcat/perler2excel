@@ -200,9 +200,32 @@ function updateGridOverlay() {
   }
 }
 
+// --- 比例锁定 ---
+let aspectLocked = true;
+
+$('lockAspect').addEventListener('click', () => {
+  aspectLocked = !aspectLocked;
+  const btn = $('lockAspect');
+  if (aspectLocked) {
+    btn.textContent = '🔒'; // 🔒
+    btn.classList.add('locked');
+    btn.title = '🔒 锁定：列/行决定裁切框比例\n🔓 解锁：裁切框自由拖拽，像素/格独立调节';
+    if (cropper) {
+      const cols = parseInt($('cols').value) || 26;
+      const rows = parseInt($('rows').value) || 23;
+      cropper.setAspectRatio(cols / rows);
+      updateGridOverlay();
+    }
+  } else {
+    btn.textContent = '🔓'; // 🔓
+    btn.classList.remove('locked');
+    btn.title = '🔒 锁定：列/行决定裁切框比例\n🔓 解锁：裁切框自由拖拽，像素/格独立调节';
+    // 解锁时也更新一次网格，让用户看到当前格子划分
+    updateGridOverlay();
+  }
+});
+
 // --- 像素/格 → 列/行联动 ---
-// 调整像素/格时只更新网格和行列显示，不动裁切框
-// 手动修改列/行时才会锁定裁切框比例（见下方 cols/rows 事件）
 function applyCellPx() {
   if (!cropper) return;
   const cellPx = Math.max(2, Math.min(500, parseInt($('cellPx').value) || 2));
@@ -211,6 +234,7 @@ function applyCellPx() {
   const rows = Math.max(1, Math.min(200, Math.round(box.height / cellPx)));
   $('cols').value = cols;
   $('rows').value = rows;
+  if (aspectLocked) cropper.setAspectRatio(cols / rows);
   updateGridOverlay();
 }
 
@@ -273,7 +297,7 @@ $('imageInput').addEventListener('change', function(e) {
     if (!cropper) return;
     const cols = clampInt('cols', 1, 200);
     const rows = clampInt('rows', 1, 200);
-    cropper.setAspectRatio(cols / rows);
+    if (aspectLocked) cropper.setAspectRatio(cols / rows);
     updateGridOverlay();
   });
 });
