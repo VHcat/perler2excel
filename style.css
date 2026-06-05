@@ -84,6 +84,16 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
     flex-shrink: 0;
 }
 .workspace .pane-body { flex: 1; overflow: hidden; position: relative; }
+
+/* === 拼豆网格叠加层 === */
+.grid-overlay {
+  position: absolute; pointer-events: none; z-index: 10;
+  display: none;
+  background-image:
+    repeating-linear-gradient(to right, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.45) 1px, transparent 1px, transparent var(--grid-cw)),
+    repeating-linear-gradient(to bottom, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.45) 1px, transparent 1px, transparent var(--grid-ch));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+}
 .workspace img { max-width: 100%; }
 
 /* === 拖拽上传遮罩 === */

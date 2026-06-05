@@ -157,8 +157,9 @@ function applyCropMode() {
     btn.classList.remove('browse');
     $('modeIcon').textContent = '\u270E'; // ✎
     $('modeText').textContent = '编辑中';
-    if (cropper) cropper.setDragMode('crop');
+    if (cropper) { cropper.setDragMode('crop'); updateGridOverlay(cropper.getData()); }
   } else {
+    $('gridOverlay').style.display = 'none';
     workspace.classList.add('browse-mode');
     btn.classList.add('browse');
     $('modeIcon').textContent = '\u270B'; // ✋
@@ -171,6 +172,27 @@ $('modeToggle').addEventListener('click', () => {
   cropEditMode = !cropEditMode;
   applyCropMode();
 });
+
+// --- 拼豆网格叠加层 ---
+function updateGridOverlay(cropDetail) {
+  const overlay = $('gridOverlay');
+  if (!cropper || !cropDetail || !cropEditMode) {
+    overlay.style.display = 'none';
+    return;
+  }
+
+  const cols = parseInt($('cols').value) || 26;
+  const rows = parseInt($('rows').value) || 23;
+  const { x, y, width, height } = cropDetail;
+
+  overlay.style.display = 'block';
+  overlay.style.left   = x + 'px';
+  overlay.style.top    = y + 'px';
+  overlay.style.width  = width + 'px';
+  overlay.style.height = height + 'px';
+  overlay.style.setProperty('--grid-cw', (width / cols) + 'px');
+  overlay.style.setProperty('--grid-ch', (height / rows) + 'px');
+}
 
 // --- 下载弹窗关闭 ---
 $('dlClose').addEventListener('click', () => {
@@ -192,6 +214,8 @@ $('imageInput').addEventListener('change', function(e) {
     cropper = new Cropper(imageEl, {
       viewMode: 1,
       dragMode: cropEditMode ? 'crop' : 'none',
+      guides: false,
+      crop(event) { updateGridOverlay(event.detail); },
       ready() {
         // Task 1: 初始化时锁定当前行列比例
         const cols = clampInt('cols', 1, 200);
@@ -213,6 +237,7 @@ $('imageInput').addEventListener('change', function(e) {
     const cols = clampInt('cols', 1, 200);
     const rows = clampInt('rows', 1, 200);
     cropper.setAspectRatio(cols / rows);
+    updateGridOverlay(cropper.getData());
   });
 });
 
