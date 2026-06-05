@@ -245,6 +245,15 @@ body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background
 }
 .dl-close:active { background: #f3f4f6; }
 
+/* === 格子校准按钮 === */
+.calibrate-btn {
+    padding: 4px 10px; border: 1px dashed #6366f1; border-radius: 6px;
+    background: #eef2ff; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: #4f46e5; white-space: nowrap; transition: all 0.15s;
+}
+.calibrate-btn:hover  { background: #e0e7ff; }
+.calibrate-btn.calibrated { border-style: solid; background: #dcfce7; border-color: #22c55e; color: #16a34a; }
+
 /* === 编辑/浏览模式切换 === */
 .mode-toggle {
     display: none; /* 默认桌面端隐藏 */

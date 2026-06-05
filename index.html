@@ -79,10 +79,13 @@
     <div class="workspace">
         <div class="pane-header" style="display:flex;justify-content:space-between;align-items:center;">
             <span>原图框选区</span>
-            <button class="mode-toggle" id="modeToggle" title="切换编辑/浏览模式">
-                <span class="mode-icon" id="modeIcon">&#9997;</span>
-                <span id="modeText">编辑中</span>
-            </button>
+            <div style="display:flex;align-items:center;gap:6px;">
+                <button class="calibrate-btn" id="calibrateBtn" title="先框选一个格子 → 点此按钮 → 再框选识别范围">📐 设为一格</button>
+                <button class="mode-toggle" id="modeToggle" title="切换编辑/浏览模式">
+                    <span class="mode-icon" id="modeIcon">&#9997;</span>
+                    <span id="modeText">编辑中</span>
+                </button>
+            </div>
         </div>
         <div class="pane-body">
             <div class="grid-overlay" id="gridOverlay"></div>
