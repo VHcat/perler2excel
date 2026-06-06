@@ -182,20 +182,24 @@ function updateGridOverlay() {
   }
 
   const box = cropper.getCropBoxData();
-  let cols, rows;
+  let cols, rows, cellW, cellH;
 
-  if (calibratedCellW !== null) {
-    // 校准模式：行列数 = 裁切框 / 单个格子
-    cols = Math.max(1, Math.min(200, Math.round(box.width / calibratedCellW)));
-    rows = Math.max(1, Math.min(200, Math.round(box.height / calibratedCellH)));
+  if (calibratedCellSize !== null) {
+    // 校准模式：正方形格子铺满裁切框
+    const cs = calibratedCellSize;
+    cols = Math.max(1, Math.min(200, Math.round(box.width / cs)));
+    rows = Math.max(1, Math.min(200, Math.round(box.height / cs)));
+    cellW = cellH = cs; // 色豆永远是正方形
     $('cols').value = cols;
     $('rows').value = rows;
     if (document.activeElement !== $('cellPx')) {
-      $('cellPx').value = Math.round((calibratedCellW + calibratedCellH) / 2);
+      $('cellPx').value = Math.round(cs);
     }
   } else {
     cols = parseInt($('cols').value) || 26;
     rows = parseInt($('rows').value) || 23;
+    cellW = box.width / cols;
+    cellH = box.height / rows;
     if (document.activeElement !== $('cellPx')) {
       $('cellPx').value = Math.round(box.width / cols);
     }
@@ -206,21 +210,19 @@ function updateGridOverlay() {
   overlay.style.top    = box.top + 'px';
   overlay.style.width  = box.width + 'px';
   overlay.style.height = box.height + 'px';
-  overlay.style.setProperty('--grid-cw', (box.width / cols) + 'px');
-  overlay.style.setProperty('--grid-ch', (box.height / rows) + 'px');
+  overlay.style.setProperty('--grid-cw', cellW + 'px');
+  overlay.style.setProperty('--grid-ch', cellH + 'px');
 }
 
 // --- 格子校准 ---
-let calibratedCellW = null;
-let calibratedCellH = null;
+let calibratedCellSize = null; // 正方形的单个格子边长（容器像素）
 
 $('calibrateBtn').addEventListener('click', () => {
   if (!cropper) return;
 
-  if (calibratedCellW !== null) {
+  if (calibratedCellSize !== null) {
     // 重新校准：清除旧值，恢复手动模式
-    calibratedCellW = null;
-    calibratedCellH = null;
+    calibratedCellSize = null;
     const btn = $('calibrateBtn');
     btn.textContent = '📐 设为一格';
     btn.classList.remove('calibrated');
@@ -229,10 +231,9 @@ $('calibrateBtn').addEventListener('click', () => {
     return;
   }
 
-  // 记录当前选框作为单个格子的尺寸
+  // 记录当前选框作为单个格子的尺寸（取平均值保证正方形）
   const box = cropper.getCropBoxData();
-  calibratedCellW = box.width;
-  calibratedCellH = box.height;
+  calibratedCellSize = (box.width + box.height) / 2;
 
   // 将裁切框扩展到整张图
   const cd = cropper.getCanvasData();
@@ -241,10 +242,10 @@ $('calibrateBtn').addEventListener('click', () => {
   // 解锁比例，自由调整识别范围
   if (aspectLocked) $('lockAspect').click();
 
-  $('cellPx').value = Math.round((box.width + box.height) / 2);
+  $('cellPx').value = Math.round(calibratedCellSize);
 
   const btn = $('calibrateBtn');
-  btn.textContent = '✓ 已设定 ' + Math.round(box.width) + '×' + Math.round(box.height) + 'px';
+  btn.textContent = '✓ 已设定 ' + Math.round(calibratedCellSize) + 'px';
   btn.classList.add('calibrated');
   btn.title = '点击重新设定格子大小';
 
@@ -280,14 +281,9 @@ function applyCellPx() {
   if (!cropper) return;
   const cellPx = Math.max(2, Math.min(500, parseFloat($('cellPx').value) || 2));
 
-  if (calibratedCellW !== null) {
-    // 校准模式：缩放已校准的格子尺寸
-    const oldAvg = Math.round((calibratedCellW + calibratedCellH) / 2);
-    if (oldAvg > 0) {
-      const scale = cellPx / oldAvg;
-      calibratedCellW = Math.max(1, Math.round(calibratedCellW * scale));
-      calibratedCellH = Math.max(1, Math.round(calibratedCellH * scale));
-    }
+  if (calibratedCellSize !== null) {
+    // 校准模式：缩放已校准的正方形格子尺寸
+    calibratedCellSize = Math.max(1, cellPx);
     updateGridOverlay();
     return;
   }
