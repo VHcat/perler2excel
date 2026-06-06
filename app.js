@@ -271,8 +271,7 @@ $('lockAspect').addEventListener('click', () => {
     btn.textContent = '🔓'; // 🔓
     btn.classList.remove('locked');
     btn.title = '🔒 锁定：列/行决定裁切框比例\n🔓 解锁：裁切框自由拖拽，像素/格独立调节';
-    // 解锁时也更新一次网格，让用户看到当前格子划分
-    updateGridOverlay();
+    if (cropper) { cropper.setAspectRatio(NaN); updateGridOverlay(); }
   }
 });
 
@@ -343,6 +342,7 @@ $('imageInput').addEventListener('change', function(e) {
         const cols = clampInt('cols', 1, 200);
         const rows = clampInt('rows', 1, 200);
         if (aspectLocked) cropper.setAspectRatio(cols / rows);
+        else cropper.setAspectRatio(NaN); // 确保解锁状态无比例约束
         // 初始化时应用当前模式（手机端默认浏览模式）
         applyCropMode();
         // 初始化像素/格显示
