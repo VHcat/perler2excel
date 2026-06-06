@@ -279,7 +279,7 @@ $('lockAspect').addEventListener('click', () => {
 // --- 像素/格 → 列/行联动 ---
 function applyCellPx() {
   if (!cropper) return;
-  const cellPx = Math.max(2, Math.min(500, parseInt($('cellPx').value) || 2));
+  const cellPx = Math.max(2, Math.min(500, parseFloat($('cellPx').value) || 2));
 
   if (calibratedCellW !== null) {
     // 校准模式：缩放已校准的格子尺寸
@@ -307,9 +307,9 @@ $('cellPx').addEventListener('input', applyCellPx);
 
 function adjustCellPx(delta) {
   if (!cropper) return;
-  const cur = parseInt($('cellPx').value) || Math.round(cropper.getCropBoxData().width / (parseInt($('cols').value) || 26));
-  // 自适应步长：值小调 1，中大调 5，很大调 10
-  const step = cur < 20 ? 1 : cur < 60 ? 5 : cur < 150 ? 10 : 25;
+  const cur = parseFloat($('cellPx').value) || Math.round(cropper.getCropBoxData().width / (parseInt($('cols').value) || 26));
+  // 自适应步长：值小调 0.5，中大调 1~5，很大调 10~25
+  const step = cur < 10 ? 0.5 : cur < 30 ? 1 : cur < 60 ? 5 : cur < 150 ? 10 : 25;
   $('cellPx').value = Math.max(2, Math.min(500, cur + delta * step));
   applyCellPx();
 }
