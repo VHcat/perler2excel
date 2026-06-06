@@ -30,7 +30,7 @@
     <div class="toolbar-group">
         <label title="拼豆画水平方向有多少颗豆子（1~200）">列: <input type="number" id="cols" value="26" min="1" max="200"></label>
         <label title="拼豆画垂直方向有多少颗豆子（1~200）">行: <input type="number" id="rows" value="23" min="1" max="200"></label>
-        <button class="lock-btn locked" id="lockAspect" title="🔒 锁定：列/行决定裁切框比例&#10;🔓 解锁：裁切框自由拖拽，像素/格独立调节">🔒</button>
+        <button class="lock-btn" id="lockAspect" title="🔒 锁定：列/行决定裁切框比例&#10;🔓 解锁：裁切框自由拖拽，像素/格独立调节">🔓</button>
         <label title="每个拼豆格对应原图的像素数，调小网格更密豆子更多，调大网格更疏。与列/行联动">像素/格:
             <span class="stepper">
                 <button class="step-btn" id="cellPxDown" title="网格更疏">−</button>

@@ -251,8 +251,8 @@ $('calibrateBtn').addEventListener('click', () => {
   applyCellPx();
 });
 
-// --- 比例锁定 ---
-let aspectLocked = true;
+// --- 比例锁定（默认解锁，自由矩形） ---
+let aspectLocked = false;
 
 $('lockAspect').addEventListener('click', () => {
   aspectLocked = !aspectLocked;
@@ -340,10 +340,9 @@ $('imageInput').addEventListener('change', function(e) {
       guides: false,
       crop() { updateGridOverlay(); },
       ready() {
-        // Task 1: 初始化时锁定当前行列比例
         const cols = clampInt('cols', 1, 200);
         const rows = clampInt('rows', 1, 200);
-        cropper.setAspectRatio(cols / rows);
+        if (aspectLocked) cropper.setAspectRatio(cols / rows);
         // 初始化时应用当前模式（手机端默认浏览模式）
         applyCropMode();
         // 初始化像素/格显示
